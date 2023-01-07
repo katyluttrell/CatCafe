@@ -72,7 +72,8 @@ public class GameFlow {
         }
     }
     private void calcNextCustomerTime(){
-        nextCustomerTime = Instant.now().getEpochSecond() + Math.round(rand.nextExponential() * avgCustomerSpawnRate);
+        double u = rand.nextDouble();
+        nextCustomerTime = Instant.now().getEpochSecond() + Math.round(-avgCustomerSpawnRate * Math.log(1 - u) );
     }
 //    private void calcNextCatTime(){
 //        nextCatRequestTime = Instant.now().getEpochSecond() + Math.round(catRequestTimeDist.sample());
