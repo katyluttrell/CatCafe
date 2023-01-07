@@ -1,11 +1,13 @@
 package com.catcafe.game;
 //MVC Pattern
-import javafx.animation.PathTransition;
+import javafx.animation.*;
 import javafx.application.Platform;
+import javafx.beans.property.DoubleProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -16,9 +18,11 @@ import javafx.util.Pair;
 import javafx.scene.text.Text;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Set;
 
 public class GamePlay_Controller {
@@ -46,7 +50,21 @@ public class GamePlay_Controller {
     @FXML
     private ImageView customer4;
     @FXML
+    private ImageView line0Heart;
+    @FXML
+    private ImageView line1Heart;
+    @FXML
+    private ImageView line2Heart;
+    @FXML
+    private ImageView line3Heart;
+    @FXML
     private Text highScoreText;
+    @FXML
+    private Text moneyMinus;
+    @FXML
+    private Text moneyPlus;
+    @FXML
+    private Text tip;
 
     //@FXML private ImageView cup;
     //private DrinkView drinkView;
@@ -56,6 +74,7 @@ public class GamePlay_Controller {
     HashMap<Integer, Pair<ImageView, CharacterView>> inGameCharacters;
     LevelName[] gameLevelList = {LevelName.ONE, LevelName.TWO, LevelName.THREE};
     private int levelNum = 0;
+    HeartView heartView = new HeartView();
 
     public GamePlay_Controller() throws IOException {
         playableCharacter = PlayableCharacter.getInstance();
@@ -90,13 +109,17 @@ public class GamePlay_Controller {
         }
     }
 
-    public synchronized void initializeImageViews(ImageView barista) {
+    public synchronized void initializeImageViews() {
         inGameCharacters.put(mybarista.getObjectID(), new Pair(barista, mybarista));
         //https://www.tabnine.com/code/java/methods/javafx.scene.image.ImageView/setVisible
         customer1.setVisible(false);
         customer2.setVisible(false);
         customer3.setVisible(false);
         customer4.setVisible(false);
+        moneyMinus.setVisible(false);
+        moneyPlus.setVisible(false);
+        tip.setOpacity(0.0);
+        tip.setVisible(true);
         inGameCharacters.put(-1, new Pair<>(customer1, null));
         inGameCharacters.put(-2, new Pair<>(customer2, null));
         inGameCharacters.put(-3, new Pair<>(customer3, null));
@@ -105,6 +128,14 @@ public class GamePlay_Controller {
         waitingLocations.put(Location.WAITING_2, true);
         waitingLocations.put(Location.WAITING_3, true);
         waitingLocations.put(Location.WAITING_4, true);
+        line0Heart.toFront();
+        line1Heart.toFront();
+        line2Heart.toFront();
+        line3Heart.toFront();
+        line0Heart.setVisible(false);
+        line1Heart.setVisible(false);
+        line2Heart.setVisible(false);
+        line3Heart.setVisible(false);
         barista.setImage(mybarista.frontImage);
     }
 
@@ -161,9 +192,9 @@ public class GamePlay_Controller {
     @FXML
     private void handleStartAction(ActionEvent event) {
         if (inGameCharacters.size() == 0) {
-            initializeImageViews(barista);
+            initializeImageViews();
         }
-        barista.setImage(mybarista.frontImage);
+        //barista.setImage(mybarista.frontImage);
         amountDisplay.setText("$0.00");
         levelScreenPicture.setOpacity(0);
         levelScreenPicture.setDisable(true);
@@ -282,7 +313,7 @@ public class GamePlay_Controller {
 
         //update the new location in character data structure
         character.setLocation(newLoc);
-        if (newX == currentX && newY == currentY) {
+        if (Objects.equals(newX, currentX) && Objects.equals(newY, currentY)) {
             //Do nothing if new location is same as current
             return;
         } else if (newX - currentX < 0) {
@@ -638,6 +669,10 @@ public class GamePlay_Controller {
         for (Button b : listOfGameButtons){
             b.setDisable(true);
         }
+        line0Heart.setVisible(false);
+        line1Heart.setVisible(false);
+        line2Heart.setVisible(false);
+        line3Heart.setVisible(false);
     }
 
     @FXML void enableGame(){
@@ -700,6 +735,120 @@ public class GamePlay_Controller {
                 case LATTE -> characterImageView.setImage(character.getFrontImageLatte());
                 default -> characterImageView.setImage(character.getFrontImage());
             }
+        }
+    }
+
+    @FXML
+    public void moneyMinusAnimation(double amount){
+        moneyMinus.setVisible(true);
+        moneyMinus.setOpacity(1);
+        DecimalFormat df = new DecimalFormat("#.00");
+        String formattedValue = df.format(amount);
+        moneyMinus.setText("- $" + formattedValue);
+        moneyMinus.setTranslateY(50);
+        moneyMinus.setLayoutX(10);
+        moneyMinus.setLayoutY(-50);
+        Timeline timeline = new Timeline();
+        KeyValue keyValue = new KeyValue(moneyMinus.translateYProperty(), -50, Interpolator.EASE_IN);
+        KeyFrame keyFrame = new KeyFrame(Duration.seconds(1), keyValue);
+        timeline.getKeyFrames().add(keyFrame);
+
+        // Add a key frame to the timeline to fade the label out
+        keyValue = new KeyValue(moneyMinus.opacityProperty(), 0);
+        keyFrame = new KeyFrame(Duration.seconds(1), keyValue);
+        timeline.getKeyFrames().add(keyFrame);
+        timeline.setOnFinished(event -> moneyMinus.setVisible(false));
+        // Play the timeline
+        timeline.play();
+    }
+    @FXML
+    public void moneyPlusAnimation(double amount){
+        moneyPlus.setVisible(true);
+        moneyPlus.setOpacity(1);
+        DecimalFormat df = new DecimalFormat("#.00");
+        String formattedValue = df.format(amount);
+        moneyPlus.setText("+ $" + formattedValue);
+        moneyPlus.setTranslateY(50);
+        moneyPlus.setLayoutX(10);
+        moneyPlus.setLayoutY(-50);
+        Timeline timeline = new Timeline();
+        KeyValue keyValue = new KeyValue(moneyPlus.translateYProperty(), -50, Interpolator.EASE_IN);
+        KeyFrame keyFrame = new KeyFrame(Duration.seconds(1), keyValue);
+        timeline.getKeyFrames().add(keyFrame);
+
+        // Add a key frame to the timeline to fade the label out
+        keyValue = new KeyValue(moneyPlus.opacityProperty(), 0);
+        keyFrame = new KeyFrame(Duration.seconds(1), keyValue);
+        timeline.getKeyFrames().add(keyFrame);
+        timeline.setOnFinished(event -> moneyPlus.setVisible(false));
+        // Play the timeline
+        timeline.play();
+    }
+
+    @FXML
+    public void tipAnimation(double amount){
+        tip.setVisible(true);
+
+        Timeline timeline1 = new Timeline(new KeyFrame(Duration.millis(500.0), event -> {
+            // Set the opacity to 1 to make the text fully visible
+            tip.setOpacity(1);
+        }));
+
+        DecimalFormat df = new DecimalFormat("#.00");
+        String formattedValue = df.format(amount);
+        tip.setText("+ $" + formattedValue);
+        tip.setTranslateY(50);
+        tip.setLayoutX(25);
+        tip.setLayoutY(-50);
+        Timeline timeline = new Timeline();
+        KeyValue keyValue = new KeyValue(tip.translateYProperty(), -50, Interpolator.EASE_IN);
+        KeyFrame keyFrame = new KeyFrame(Duration.seconds(1), keyValue);
+        timeline.getKeyFrames().add(keyFrame);
+
+        // Add a key frame to the timeline to fade the label out
+        keyValue = new KeyValue(tip.opacityProperty(), 0);
+        keyFrame = new KeyFrame(Duration.seconds(1), keyValue);
+        timeline.getKeyFrames().add(keyFrame);
+        //timeline.setOnFinished(event -> tip.setVisible(false));
+        // Play the timeline
+        timeline.setDelay(Duration.millis(500));
+        timeline1.setOnFinished(event -> timeline.play());
+        timeline1.play();
+    }
+
+    public void changePatienceHeart(Location location, double patienceLevel){
+        if (location == Location.LINE_0){
+            line0Heart.setImage(heartView.getHeartFromPatience(patienceLevel));
+        } else if (location == Location.LINE_1){
+            line1Heart.setImage(heartView.getHeartFromPatience(patienceLevel));
+        } else if (location == Location.LINE_2){
+            line2Heart.setImage(heartView.getHeartFromPatience(patienceLevel));
+        } else if (location == Location.LINE_3){
+            line3Heart.setImage(heartView.getHeartFromPatience(patienceLevel));
+        }
+    }
+
+    public void showPatienceHeart(Location location){
+        if (location == Location.LINE_0){
+            line0Heart.setVisible(true);
+        } else if (location == Location.LINE_1){
+            line1Heart.setVisible(true);
+        } else if (location == Location.LINE_2){
+            line2Heart.setVisible(true);
+        } else if (location == Location.LINE_3){
+            line3Heart.setVisible(true);
+        }
+    }
+
+    public void hidePateinceHeart(Location location){
+        if (location == Location.LINE_0){
+            line0Heart.setVisible(false);
+        } else if (location == Location.LINE_1){
+            line1Heart.setVisible(false);
+        } else if (location == Location.LINE_2){
+            line2Heart.setVisible(false);
+        } else if (location == Location.LINE_3){
+            line3Heart.setVisible(false);
         }
     }
 }

@@ -1,6 +1,8 @@
 package com.catcafe.game;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.util.Pair;
+
 import java.util.SplittableRandom;
 //Command Pattern
 public class InGameCommand extends Command{
@@ -17,13 +19,21 @@ class OrderUpCommand extends InGameCommand{
         System.out.println(description);
         model.modifyData(receiver.getId(), Attribute.LOCATION, Location.REGISTER);
         PointOfSale point = PointOfSale.getInstance(Account.getInstance(), CustomerManager.getInstance(Account.getInstance()));
-        Boolean orderBool = point.orderUp(receiver.getCarryingItem());
-        if(orderBool == true){
+        Pair<Double, Double> orderAmountAndTip = point.orderUp(receiver.getCarryingItem());
+        Double orderAmount = orderAmountAndTip.getKey();
+        Double tip = orderAmountAndTip.getValue();
+        if(orderAmount > 0){
             receiver.stopCarryingItem();
         }else{
             System.out.println("Incorrect order, throw away and try again.");
         }
         model.updateMoneyAmount();
+        if(orderAmount > 0) {
+            model.moneyChange(orderAmount);
+        }
+        if(tip > 0){
+            model.moneyChangeTip(tip);
+        }
     }
 }
 
@@ -115,8 +125,12 @@ class ThrowAwayCommand extends InGameCommand{
     void execute() {
         model.modifyData(receiver.getId(), Attribute.LOCATION, Location.TRASH);
         PointOfSale point = PointOfSale.getInstance(Account.getInstance(), CustomerManager.getInstance(Account.getInstance()));
-        point.subtractThrowAway(receiver.getCarryingItem());
+        double amount = point.subtractThrowAway(receiver.getCarryingItem());
         model.updateMoneyAmount();
+        if(amount > 0 ) {
+            model.moneyChange(amount * -1);
+        }
         receiver.stopCarryingItem();
+
     }
 }

@@ -2,6 +2,8 @@ package com.catcafe.game;
 import java.io.IOException;
 import java.util.*;
 
+import static java.lang.Math.abs;
+
 enum Requestable{
     COFFEE,
     LATTE,
@@ -173,6 +175,8 @@ public class Model {
             try {
                 view.addNPC(id, character, location);
                 updateRequestGraphic();
+                view.changePatienceHeart(location, patienceLevel);
+                view.showPatienceHeart(location);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -192,8 +196,9 @@ public class Model {
     }
     public synchronized void modifyData(int id, Attribute attribute, Object value){
         if(attribute == Attribute.LOCATION){
+            Location oldLocation = (Location) getData(id, Attribute.LOCATION);
             //make previous location false
-            updateLocationStatus((Location) getData(id, Attribute.LOCATION), -1);
+            updateLocationStatus(oldLocation, -1);
             // make new location true
             updateLocationStatus((Location) value, id);
             //System.out.println("ID = " + id);
@@ -201,13 +206,22 @@ public class Model {
                 view.updateLocation(id, (Location) value);
             }
             else{
+                //hide heart in previous location
+                view.hidePateinceHeart(oldLocation);
                 view.updateLocationNoWalk(id, (Location) value);
+                //show patience heart in new location
+                view.changePatienceHeart((Location) value, (Double) getData(id, Attribute.PATIENCE));
+                view.showPatienceHeart((Location) value);
             }
+
 
         }
         else if(attribute == Attribute.DRINK && id  == 0 ){
             System.out.println("ID : " + id + " value: " + value);
             view.changeBaristaItem(id, (Requestable) value);
+        }
+        else if(attribute == Attribute.PATIENCE){
+            view.changePatienceHeart((Location) getData(id, Attribute.LOCATION), (Double) value);
         }
         if(human.get(id) != null){
             human.get(id).replace(attribute, value);
@@ -217,6 +231,7 @@ public class Model {
     public synchronized void removeData(int id){
         //make it so nobody is standing there
         updateLocationStatus((Location) getData(id, Attribute.LOCATION), -1);
+        view.hidePateinceHeart((Location) getData(id, Attribute.LOCATION));
         human.remove(id);
         view.removeNPC(id);
         lineMoveUp();
@@ -275,6 +290,17 @@ public class Model {
     public void updateMoneyAmount(){
         moneyAmount = Account.getInstance().getAmountString();
         view.updateMoneyDisplay(moneyAmount);
+    }
+    public void moneyChange(double amount){
+        if(amount < 0) {
+            view.moneyMinusAnimation(abs(amount));
+        }
+        else{
+            view.moneyPlusAnimation(abs(amount));
+        }
+    }
+    public void moneyChangeTip(double amount){
+        view.tipAnimation(amount);
     }
     public void updateRequestGraphic(){
         System.out.println("here");

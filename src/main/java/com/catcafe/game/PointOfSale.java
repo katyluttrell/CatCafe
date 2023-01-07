@@ -1,6 +1,7 @@
 package com.catcafe.game;
 //Singleton Pattern, Lazy Instantiation
 import javafx.scene.effect.Light;
+import javafx.util.Pair;
 
 public class PointOfSale {
     private Account account;
@@ -22,10 +23,10 @@ public class PointOfSale {
     /*
      Compare the customer request and created beverage and see if they are the same. Returns true if success.
      */
-    public Boolean orderUp(Item bev){
+    public Pair<Double, Double> orderUp(Item bev){
         Customer c = customerManager.nextCustomer();
         if(c == null){
-            return false;
+            return new Pair(-1.0, 0.0);
         }
         if(bev instanceof Beverage){
             System.out.println("Serving Customer " + c.objectID);
@@ -33,31 +34,38 @@ public class PointOfSale {
             System.out.println("customer wants " + r.getRequestedItem().getDescription());
             System.out.println("you have " +bev.getDescription());
             if(r.getRequestedItem().compare(bev)) {
-                account.addMoney(((Beverage) bev).getCost());
+                double amount = ((Beverage) bev).getCost();
+                account.addMoney(amount);
                 customerManager.remove(c);
                 System.out.println("Correct Order");
                 //TIPPING based on customer patience
-                tip(c.patienceLevel);
-                return true;
+                double tip = tip(c.patienceLevel);
+                return new Pair(amount, tip);
             }
             else{
-                return false;
+                return new Pair(-1.0, 0.0);
             }
         }
         else{
-            return false;
+            return new Pair(-1.0, 0.0);
         }
     }
-    public void subtractThrowAway(Item bev){
+    public double subtractThrowAway(Item bev){
         if(bev == null){
-            return;
+            return -1;
         }
         else if(bev instanceof Beverage){
-            account.removeMoney(((Beverage) bev).getCost() * 0.5);
+            double moneyChange = ((Beverage) bev).getCost() * 0.5;
+            account.removeMoney(moneyChange);
+            return moneyChange;
+        }
+        else{
+            return -1;
         }
     }
-    private void tip(Double patienceLevel){
+    private Double tip(Double patienceLevel){
         account.addMoney(patienceLevel);
         System.out.println("Customer Tipped $" + patienceLevel);
+        return patienceLevel;
     }
 }
