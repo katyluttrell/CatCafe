@@ -1,8 +1,8 @@
 package com.catcafe.game;
 
-import org.apache.commons.math3.distribution.ExponentialDistribution;
 
 import java.time.Instant;
+import java.util.Random;
 
 import static java.lang.Thread.sleep;
 
@@ -15,8 +15,9 @@ public class GameFlow {
     private long nextCustomerTime; //Time at which a new customer will spawn
     private CustomerManager customerManager;
     private Invoker invoker;
-    private ExponentialDistribution catRequestTimeDist;
-    private ExponentialDistribution customerSpawnTimeDist;
+    //private ExponentialDistribution catRequestTimeDist;
+    private Random rand;
+    private double avgCustomerSpawnRate;
     private Account account;
 
     /**
@@ -31,7 +32,8 @@ public class GameFlow {
         this.customerManager = CustomerManager.getInstance(Account.getInstance());
         this.invoker = invoker;
         //catRequestTimeDist = new ExponentialDistribution(avgCatRequestRate);
-        customerSpawnTimeDist = new ExponentialDistribution(avgCustomerSpawnRate);
+        this.avgCustomerSpawnRate = avgCustomerSpawnRate;
+        rand = new Random();
         //calcNextCatTime();
         nextCustomerTime = Instant.now().getEpochSecond();
     }
@@ -70,9 +72,9 @@ public class GameFlow {
         }
     }
     private void calcNextCustomerTime(){
-        nextCustomerTime = Instant.now().getEpochSecond() + Math.round(customerSpawnTimeDist.sample());
+        nextCustomerTime = Instant.now().getEpochSecond() + Math.round(rand.nextExponential() * avgCustomerSpawnRate);
     }
-    private void calcNextCatTime(){
-        nextCatRequestTime = Instant.now().getEpochSecond() + Math.round(catRequestTimeDist.sample());
-    }
+//    private void calcNextCatTime(){
+//        nextCatRequestTime = Instant.now().getEpochSecond() + Math.round(catRequestTimeDist.sample());
+//    }
 }
